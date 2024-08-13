@@ -10,6 +10,8 @@ import SwiftUI
 struct EmojiArtDocumentView: View {
     typealias Emoji = EmojiArt.Emoji
     
+    var mySturldata = Sturldata(string: "https://i1.daumcdn.net/thumb/C100x100/?scode=mtistory2&fname=https%3A%2F%2Ftistory1.daumcdn.net%2Ftistory%2F6840637%2Fattach%2F1e40792b205541e0b0e2604fa7a48a81")
+    
     private let emojis = "👻🍎😃🤪☹️🤯🐶🐭🦁🐵🦆🐝🐢🐄🐖🌲🌴🌵🍄🌞🌎🔥🌈🌧️🌨️☁️⛄️⛳️🚗🚙🚓🚲🛺🏍️🚘✈️🛩️🚀🚁🏰🏠❤️💤⛵️"
     
     @ObservedObject var document: EmojiArtDocument
@@ -25,24 +27,47 @@ struct EmojiArtDocumentView: View {
                 .padding(.horizontal)
                 .scrollIndicators(.hidden)
         }
+        .onAppear {
+            print(mySturldata)
+        }
     }
     
     var documentBody: some View {
         GeometryReader { geometry in
             ZStack {
                 Color.white
-                
-                AsyncImage(url: document.background)
-                
-                ForEach(document.emojis) { emoji in
-                    Text(emoji.emoji)
-                        .position(emoji.position.in(geometry: geometry ))
-                        .font(emoji.font)
-                }
+                documentContent(in: geometry)
+                    .scaleEffect(zoomScale * gestureZoomScale)
             }
             .dropDestination(for: Sturldata.self) { Sturldatas, location in
                 return drop(Sturldatas, at: location, in: geometry)
             }
+            .gesture(zoomGesture)
+        }
+    }
+    
+    @State private var zoomScale: CGFloat = 1
+    
+    @GestureState private var gestureZoomScale: CGFloat = 1
+    
+    var zoomGesture: some Gesture {
+        MagnifyGesture()
+            .updating($gestureZoomScale) { updatingScale, gestureZoomScale, _ in
+                gestureZoomScale = updatingScale.magnification
+            }
+            .onEnded { endedScale in
+                zoomScale *= endedScale.magnification
+            }
+    }
+    
+    @ViewBuilder
+    func documentContent(in geometry: GeometryProxy) -> some View {
+        AsyncImage(url: document.background)
+        
+        ForEach(document.emojis) { emoji in
+            Text(emoji.emoji)
+                .position(emoji.position.in(geometry: geometry ))
+                .font(emoji.font)
         }
     }
     
