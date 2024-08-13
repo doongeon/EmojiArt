@@ -38,17 +38,20 @@ struct EmojiArtDocumentView: View {
                 Color.white
                 documentContent(in: geometry)
                     .scaleEffect(zoomScale * gestureZoomScale)
+                    .offset(panOffset + gesturePanOffset)
             }
             .dropDestination(for: Sturldata.self) { Sturldatas, location in
                 return drop(Sturldatas, at: location, in: geometry)
             }
-            .gesture(zoomGesture)
+            .gesture(panGesture.simultaneously(with: zoomGesture))
         }
     }
     
     @State private var zoomScale: CGFloat = 1
+    @State private var panOffset: CGOffset = .zero
     
     @GestureState private var gestureZoomScale: CGFloat = 1
+    @GestureState private var gesturePanOffset: CGOffset = .zero
     
     var zoomGesture: some Gesture {
         MagnifyGesture()
@@ -57,6 +60,16 @@ struct EmojiArtDocumentView: View {
             }
             .onEnded { endedScale in
                 zoomScale *= endedScale.magnification
+            }
+    }
+    
+    var panGesture: some Gesture {
+        DragGesture()
+            .updating ($gesturePanOffset) { value, gesturePanOffset, _ in
+                gesturePanOffset = value.translation
+            }
+            .onEnded { value in
+                panOffset += value.translation
             }
     }
     
@@ -82,7 +95,7 @@ struct EmojiArtDocumentView: View {
                 document.setBackground(url: url)
                 return true
             case .string(let emoji):
-                document.addEmoji(emoji: emoji, position: emojiPosition(at: location, in: geomtry), size: paleteEmojiSize)
+                document.addEmoji(emoji: emoji, position: emojiPosition(at: location, in: geomtry), size: paleteEmojiSize / zoomScale)
                 return true
             default:
                 return false
@@ -94,8 +107,8 @@ struct EmojiArtDocumentView: View {
     private func emojiPosition(at location: CGPoint, in geometry: GeometryProxy) -> Emoji.Position {
         let center = geometry.frame(in: .local).center()
         return Emoji.Position(
-            x: Int(location.x - center.x),
-            y: Int(-(location.y - center.y))
+            x: Int((location.x - center.x - panOffset.width) / zoomScale),
+            y: Int(-(location.y - center.y - panOffset.height) / zoomScale)
         )
     }
 }
@@ -116,6 +129,17 @@ struct EmojiPalette: View  {
                 }
             }
         }
+    }
+}
+
+typealias CGOffset = CGSize
+extension CGOffset {
+    static func +(lhs: CGOffset, rhs: CGOffset) -> CGOffset {
+        CGSize(width: lhs.width + rhs.width, height: lhs.height + rhs.height)
+    }
+    
+    static func +=(lhs: inout CGOffset, rhs: CGOffset) {
+        lhs = lhs + rhs
     }
 }
 
