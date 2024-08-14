@@ -21,18 +21,22 @@ class EmojiArtDocument: ObservableObject {
         emojiArt.emojis
     }
     
+    func scaleEmoji(id: Emoji.ID, scale: CGFloat) -> Void {
+        emojiArt.scaleEmoji(id: id, scale: Double(scale))
+    }
+    
+    func panEmoji(id: Emoji.ID, offset: CGOffset) -> Void {
+        emojiArt.panEmoji(id: id, offset: Offset(x: offset.width, y: -offset.height))
+    }
+    
     // MARK: - Intents
     
     func setBackground (url: URL) -> Void {
         emojiArt.setBackground(url: url)
     }
     
-    func updateEmojiSize(id: Emoji.ID, to size: CGFloat) -> Void {
-        emojiArt.emojis
-    }
-    
     func addEmoji(emoji: String, position: Emoji.Position, size: CGFloat) -> Void {
-        emojiArt.addEmoji(emoji: emoji, position: position, size: Int(size))
+        emojiArt.addEmoji(emoji: emoji, position: position, size: Double(size))
     }
 }
 

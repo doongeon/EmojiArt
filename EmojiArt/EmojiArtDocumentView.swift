@@ -30,39 +30,76 @@ struct EmojiArtDocumentView: View {
                 documentContent(in: geometry)
                     .scaleEffect(zoomScale * gestureZoomScale)
                     .offset(panOffset + gesturePanOffset)
+                    .onTapGesture {
+                        withAnimation {
+                            selectedImoji = Set()
+                        }
+                    }
             }
             .dropDestination(for: Sturldata.self) { Sturldatas, location in
                 return drop(Sturldatas, at: location, in: geometry)
             }
-            .gesture(panGesture.simultaneously(with: zoomGesture))
+            .gesture(!selectedImoji.isEmpty ? emojiZoomGesture : nil)
+            .gesture(
+                selectedImoji.isEmpty ? panGesture.simultaneously(with: zoomGesture) : nil
+            )
         }
     }
     
+    
+    //
+    // Emoji gesture
+    //
     @State private var selectedImoji: Set<Emoji.ID> = Set()
     
+    @GestureState private var gestureZoomScale: CGFloat = 1
+    @GestureState private var gestureEmojiOffset: CGOffset = .zero
+    
+    var emojiPanGesture: some Gesture {
+        DragGesture()
+            .updating ($gestureEmojiOffset) { value, gestureEmojiOffset, _ in
+                gestureEmojiOffset = value.translation
+            }
+            .onEnded { value in
+                for id in selectedImoji {
+                    document.panEmoji(id: id, offset: value.translation)
+                }
+            }
+    }
+    
+    var emojiZoomGesture: some Gesture {
+        MagnifyGesture()
+            .updating($gestureEmojiZoomScale) { updatingScale, gestureEmojiZoomScale, _ in
+                gestureEmojiZoomScale = updatingScale.magnification
+            }
+            .onEnded { endedScale in
+                for id in selectedImoji {
+                    document.scaleEmoji(id: id, scale: endedScale.magnification)
+                }
+            }
+    }
+    //
+    //
+    //
+    
+    
+    //
+    // Document gesture
+    //
     @State private var zoomScale: CGFloat = 1
     @State private var panOffset: CGOffset = .zero
     
-    @GestureState private var gestureZoomScale: CGFloat = 1
+    @GestureState private var gestureEmojiZoomScale: CGFloat = 1
     @GestureState private var gesturePanOffset: CGOffset = .zero
     
     var zoomGesture: some Gesture {
-        if selectedImoji.isEmpty {
-            MagnifyGesture()
-                .updating($gestureZoomScale) { updatingScale, gestureZoomScale, _ in
-                    gestureZoomScale = updatingScale.magnification
-                }
-                .onEnded { endedScale in
-                    zoomScale *= endedScale.magnification
-                }
-        } else {
-            MagnifyGesture()
-                .onEnded { enedeSclae in
-                    for id in selectedImoji {
-                        document.emojis.fi
-                    }
-                }
-        }
+        MagnifyGesture()
+            .updating($gestureZoomScale) { updatingScale, gestureZoomScale, _ in
+                gestureZoomScale = updatingScale.magnification
+            }
+            .onEnded { endedScale in
+                zoomScale *= endedScale.magnification
+            }
     }
     
     var panGesture: some Gesture {
@@ -74,16 +111,25 @@ struct EmojiArtDocumentView: View {
                 panOffset += value.translation
             }
     }
+    //
+    //
+    //
+    
     
     @ViewBuilder
     func documentContent(in geometry: GeometryProxy) -> some View {
         AsyncImage(url: document.background)
-        
         ForEach(document.emojis) { emoji in
             Text(emoji.emoji)
                 .background(selectedImoji.contains(emoji.id) ? .blue : .clear)
-                .position(emoji.position.in(geometry: geometry ))
-                .font(emoji.font)
+                .position(emoji.position.in(geometry: geometry))
+                .offset(selectedImoji.contains(emoji.id) ? gestureEmojiOffset : .zero )
+                .font(
+                    .system(
+                        size: CGFloat(emoji.size) * (
+                            selectedImoji.contains(emoji.id) ? gestureEmojiZoomScale : 1)
+                    )
+                )
                 .onTapGesture {
                     withAnimation {
                         if !selectedImoji.contains(emoji.id) {
@@ -93,6 +139,7 @@ struct EmojiArtDocumentView: View {
                         }
                     }
                 }
+                .gesture(selectedImoji.contains(emoji.id) ? emojiPanGesture : nil )
         }
     }
     
@@ -107,7 +154,10 @@ struct EmojiArtDocumentView: View {
                 document.setBackground(url: url)
                 return true
             case .string(let emoji):
-                document.addEmoji(emoji: emoji, position: emojiPosition(at: location, in: geomtry), size: paleteEmojiSize / zoomScale)
+                document.addEmoji(
+                    emoji: emoji,
+                    position: emojiPosition(at: location, in: geomtry),
+                    size: paleteEmojiSize / zoomScale)
                 return true
             default:
                 return false
@@ -119,8 +169,8 @@ struct EmojiArtDocumentView: View {
     private func emojiPosition(at location: CGPoint, in geometry: GeometryProxy) -> Emoji.Position {
         let center = geometry.frame(in: .local).center()
         return Emoji.Position(
-            x: Int((location.x - center.x - panOffset.width) / zoomScale),
-            y: Int(-(location.y - center.y - panOffset.height) / zoomScale)
+            x: Double ((location.x - center.x - panOffset.width) / zoomScale),
+            y: Double (-(location.y - center.y - panOffset.height) / zoomScale)
         )
     }
 }

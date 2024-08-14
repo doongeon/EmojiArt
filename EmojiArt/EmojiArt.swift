@@ -16,24 +16,46 @@ struct EmojiArt {
         self.url = url 
     }
     
-    mutating func addEmoji(emoji: String, position: Emoji.Position, size: Int ) {
+    mutating func addEmoji(emoji: String, position: Emoji.Position, size: Double ) {
         emojis.append(Emoji(id: uniqueEmojiId, emoji: emoji, position: position, size: size))
         uniqueEmojiId += 1
+    }
+    
+    mutating func scaleEmoji(id: Emoji.ID, scale: Double) -> Void {
+        if let emojiIndex = emojis.firstIndex(where: { $0.id == id  }) {
+            emojis[emojiIndex].scaleSize(scale: scale)
+        }
+    }
+    
+    mutating func panEmoji(id: Emoji.ID, offset: Offset) -> Void {
+        if let emojiIndex = emojis.firstIndex(where: {$0.id == id}) {
+            emojis[emojiIndex].move(offset: offset)
+        }
     }
     
     struct Emoji: Identifiable {
         var id: Int
         let emoji: String
         var position: Position
-        var size: Int
+        var size: Double
         
         struct Position {
-            var x: Int
-            var y: Int 
+            var x: Double
+            var y: Double
         }
         
-        mutating func setSize(size: Int) -> Void {
-            self.size = size
+        mutating func scaleSize(scale: Double) -> Void {
+            size *= scale
+        }
+        
+        mutating func move(offset: Offset) -> Void {
+            position.x += offset.x
+            position.y += offset.y
         }
     }
+}
+
+struct Offset {
+    let x: Double
+    let y: Double
 }
