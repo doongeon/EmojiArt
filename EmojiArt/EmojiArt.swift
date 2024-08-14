@@ -10,7 +10,7 @@ import Foundation
 struct EmojiArt {
     var url: URL?
     private(set) var emojis = [Emoji]()
-    var uniqueEmojiId = 0
+    private var uniqueEmojiId = 0
     
     mutating func setBackground(url: URL) -> Void {
         self.url = url 
@@ -30,6 +30,10 @@ struct EmojiArt {
         struct Position {
             var x: Int
             var y: Int 
+        }
+        
+        mutating func setSize(size: Int) -> Void {
+            self.size = size
         }
     }
 }

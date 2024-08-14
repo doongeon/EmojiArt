@@ -10,25 +10,16 @@ import SwiftUI
 struct EmojiArtDocumentView: View {
     typealias Emoji = EmojiArt.Emoji
     
-    var mySturldata = Sturldata(string: "https://i1.daumcdn.net/thumb/C100x100/?scode=mtistory2&fname=https%3A%2F%2Ftistory1.daumcdn.net%2Ftistory%2F6840637%2Fattach%2F1e40792b205541e0b0e2604fa7a48a81")
-    
-    private let emojis = "👻🍎😃🤪☹️🤯🐶🐭🦁🐵🦆🐝🐢🐄🐖🌲🌴🌵🍄🌞🌎🔥🌈🌧️🌨️☁️⛄️⛳️🚗🚙🚓🚲🛺🏍️🚘✈️🛩️🚀🚁🏰🏠❤️💤⛵️"
-    
     @ObservedObject var document: EmojiArtDocument
-    
     private let paleteEmojiSize: CGFloat = 40
     
     var body: some View {
         VStack {
             documentBody
-            
-            EmojiPalette(emojis: emojis)
+            PaletteView()
                 .font(Font.system(size: paleteEmojiSize))
                 .padding(.horizontal)
                 .scrollIndicators(.hidden)
-        }
-        .onAppear {
-            print(mySturldata)
         }
     }
     
@@ -47,6 +38,8 @@ struct EmojiArtDocumentView: View {
         }
     }
     
+    @State private var selectedImoji: Set<Emoji.ID> = Set()
+    
     @State private var zoomScale: CGFloat = 1
     @State private var panOffset: CGOffset = .zero
     
@@ -54,13 +47,22 @@ struct EmojiArtDocumentView: View {
     @GestureState private var gesturePanOffset: CGOffset = .zero
     
     var zoomGesture: some Gesture {
-        MagnifyGesture()
-            .updating($gestureZoomScale) { updatingScale, gestureZoomScale, _ in
-                gestureZoomScale = updatingScale.magnification
-            }
-            .onEnded { endedScale in
-                zoomScale *= endedScale.magnification
-            }
+        if selectedImoji.isEmpty {
+            MagnifyGesture()
+                .updating($gestureZoomScale) { updatingScale, gestureZoomScale, _ in
+                    gestureZoomScale = updatingScale.magnification
+                }
+                .onEnded { endedScale in
+                    zoomScale *= endedScale.magnification
+                }
+        } else {
+            MagnifyGesture()
+                .onEnded { enedeSclae in
+                    for id in selectedImoji {
+                        document.emojis.fi
+                    }
+                }
+        }
     }
     
     var panGesture: some Gesture {
@@ -79,8 +81,18 @@ struct EmojiArtDocumentView: View {
         
         ForEach(document.emojis) { emoji in
             Text(emoji.emoji)
+                .background(selectedImoji.contains(emoji.id) ? .blue : .clear)
                 .position(emoji.position.in(geometry: geometry ))
                 .font(emoji.font)
+                .onTapGesture {
+                    withAnimation {
+                        if !selectedImoji.contains(emoji.id) {
+                            selectedImoji.insert(emoji.id)
+                        } else {
+                            selectedImoji.remove(emoji.id)
+                        }
+                    }
+                }
         }
     }
     
@@ -113,55 +125,9 @@ struct EmojiArtDocumentView: View {
     }
 }
 
-struct EmojiPalette: View  {
-    let emojis: Array<String>
-    
-    init(emojis: String ) {
-        self.emojis = emojis.unique()
-    }
-    
-    var body: some View {
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(emojis, id: \.self) { emoji in
-                    Text(emoji)
-                        .draggable(emoji)
-                }
-            }
-        }
-    }
-}
-
-typealias CGOffset = CGSize
-extension CGOffset {
-    static func +(lhs: CGOffset, rhs: CGOffset) -> CGOffset {
-        CGSize(width: lhs.width + rhs.width, height: lhs.height + rhs.height)
-    }
-    
-    static func +=(lhs: inout CGOffset, rhs: CGOffset) {
-        lhs = lhs + rhs
-    }
-}
-
-
-extension String {
-    func unique() -> Array<String> {
-        return self.reduce(into: []) { sofar, char in
-            if !sofar.contains(String(char)) {
-                sofar.append(String(char))
-            }
-        }
-    }
-}
-
-extension CGRect {
-    func center() -> CGPoint {
-        return CGPoint(x: midX, y: midY)
-    }
-}
-
 #Preview {
     EmojiArtDocumentView(document: EmojiArtDocument())
+        .environment(PaletteStore(name: "EmojiArtDocumentPreview"))
 }
 
 

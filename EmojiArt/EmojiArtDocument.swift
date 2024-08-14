@@ -27,6 +27,10 @@ class EmojiArtDocument: ObservableObject {
         emojiArt.setBackground(url: url)
     }
     
+    func updateEmojiSize(id: Emoji.ID, to size: CGFloat) -> Void {
+        emojiArt.emojis
+    }
+    
     func addEmoji(emoji: String, position: Emoji.Position, size: CGFloat) -> Void {
         emojiArt.addEmoji(emoji: emoji, position: position, size: Int(size))
     }
