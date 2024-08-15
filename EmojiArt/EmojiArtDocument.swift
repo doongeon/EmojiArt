@@ -38,6 +38,10 @@ class EmojiArtDocument: ObservableObject {
     func addEmoji(emoji: String, position: Emoji.Position, size: CGFloat) -> Void {
         emojiArt.addEmoji(emoji: emoji, position: position, size: Double(size))
     }
+    
+    func removeEmoji(emoji: Emoji) -> Void {
+        emojiArt.removeEmoji(id: emoji.id)
+    }
 }
 
 extension EmojiArt.Emoji {

@@ -21,6 +21,12 @@ struct EmojiArt {
         uniqueEmojiId += 1
     }
     
+    mutating func removeEmoji(id: Emoji.ID) -> Void {
+        if let indexOfEmoji = emojis.firstIndex(where: {$0.id == id}) {
+            emojis.remove(at: indexOfEmoji)
+        }
+    }
+    
     mutating func scaleEmoji(id: Emoji.ID, scale: Double) -> Void {
         if let emojiIndex = emojis.firstIndex(where: { $0.id == id  }) {
             emojis[emojiIndex].scaleSize(scale: scale)
@@ -42,6 +48,10 @@ struct EmojiArt {
         struct Position {
             var x: Double
             var y: Double
+            
+            static var zero: Position {
+                Position(x: 0, y: 0)
+            }
         }
         
         mutating func scaleSize(scale: Double) -> Void {

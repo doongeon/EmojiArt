@@ -122,6 +122,7 @@ struct EmojiArtDocumentView: View {
     @ViewBuilder
     func documentContent(in geometry: GeometryProxy) -> some View {
         AsyncImage(url: document.background)
+            .position(Emoji.Position.zero.in(geometry: geometry))
         ForEach(document.emojis) { emoji in
             view(for: emoji, in: geometry)
                 .onTapGesture {
@@ -140,7 +141,6 @@ struct EmojiArtDocumentView: View {
     func view(for emoji: Emoji, in geometry: GeometryProxy) -> some View {
         Text(emoji.emoji)
             .border(selectedImoji.contains(emoji.id) ? .blue : .clear)
-            .position(emoji.position.in(geometry: geometry))
             .offset(selectedImoji.contains(emoji.id) ? gestureEmojiOffset : .zero )
             .font(
                 .system(
@@ -148,6 +148,12 @@ struct EmojiArtDocumentView: View {
                         selectedImoji.contains(emoji.id) ? gestureEmojiZoomScale : 1)
                 )
             )
+            .contextMenu {
+                ActionButton(title: "Delete", image: "trash", role: .destructive) {
+                    document.removeEmoji(emoji: emoji)
+                }
+            }
+            .position(emoji.position.in(geometry: geometry))
     }
     
     
