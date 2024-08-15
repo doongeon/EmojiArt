@@ -125,6 +125,7 @@ struct EmojiArtDocumentView: View {
             .position(Emoji.Position.zero.in(geometry: geometry))
         ForEach(document.emojis) { emoji in
             view(for: emoji, in: geometry)
+                .offset(dragedEmojiId == emoji.id ? imojiDragOffset : .zero)
                 .onTapGesture {
                     withAnimation {
                         if !selectedImoji.contains(emoji.id) {
@@ -135,7 +136,25 @@ struct EmojiArtDocumentView: View {
                     }
                 }
                 .gesture(selectedImoji.contains(emoji.id) ? emojiPanGesture : nil )
+                .gesture(imojiDrageGesture(emoji: emoji, in: geometry))
         }
+    }
+    
+    @GestureState var imojiDragOffset: CGOffset = .zero
+    @State var dragedEmojiId: Emoji.ID? = nil
+    
+    func imojiDrageGesture(emoji: Emoji, in geometyr: GeometryProxy) -> some Gesture {
+        return DragGesture()
+            .onChanged { _ in
+                dragedEmojiId = emoji.id
+            }
+            .updating( $imojiDragOffset) { value, imojiDragOffset, _ in
+                imojiDragOffset = value.translation
+            }
+            .onEnded { value in
+                document.panEmoji(id: emoji.id, offset: value.translation)
+                dragedEmojiId = nil
+            }
     }
     
     func view(for emoji: Emoji, in geometry: GeometryProxy) -> some View {
