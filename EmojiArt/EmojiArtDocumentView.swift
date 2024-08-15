@@ -39,9 +39,12 @@ struct EmojiArtDocumentView: View {
             .dropDestination(for: Sturldata.self) { Sturldatas, location in
                 return drop(Sturldatas, at: location, in: geometry)
             }
-            .gesture(!selectedImoji.isEmpty ? emojiZoomGesture : nil)
             .gesture(
-                selectedImoji.isEmpty ? panGesture.simultaneously(with: zoomGesture) : nil
+                panGesture.simultaneously(
+                    with: selectedImoji.isEmpty ? zoomGesture : nil
+                ).simultaneously(
+                    with: !selectedImoji.isEmpty ? emojiZoomGesture : nil
+                )
             )
         }
     }
@@ -120,16 +123,7 @@ struct EmojiArtDocumentView: View {
     func documentContent(in geometry: GeometryProxy) -> some View {
         AsyncImage(url: document.background)
         ForEach(document.emojis) { emoji in
-            Text(emoji.emoji)
-                .background(selectedImoji.contains(emoji.id) ? .blue : .clear)
-                .position(emoji.position.in(geometry: geometry))
-                .offset(selectedImoji.contains(emoji.id) ? gestureEmojiOffset : .zero )
-                .font(
-                    .system(
-                        size: CGFloat(emoji.size) * (
-                            selectedImoji.contains(emoji.id) ? gestureEmojiZoomScale : 1)
-                    )
-                )
+            view(for: emoji, in: geometry)
                 .onTapGesture {
                     withAnimation {
                         if !selectedImoji.contains(emoji.id) {
@@ -142,6 +136,20 @@ struct EmojiArtDocumentView: View {
                 .gesture(selectedImoji.contains(emoji.id) ? emojiPanGesture : nil )
         }
     }
+    
+    func view(for emoji: Emoji, in geometry: GeometryProxy) -> some View {
+        Text(emoji.emoji)
+            .border(selectedImoji.contains(emoji.id) ? .blue : .clear)
+            .position(emoji.position.in(geometry: geometry))
+            .offset(selectedImoji.contains(emoji.id) ? gestureEmojiOffset : .zero )
+            .font(
+                .system(
+                    size: CGFloat(emoji.size) * (
+                        selectedImoji.contains(emoji.id) ? gestureEmojiZoomScale : 1)
+                )
+            )
+    }
+    
     
     private func drop(
         _ sturldatas: Array<Sturldata>,
