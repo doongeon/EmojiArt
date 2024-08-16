@@ -7,10 +7,22 @@
 
 import Foundation
 
-struct EmojiArt {
+struct EmojiArt: Codable {
     var url: URL?
     private(set) var emojis = [Emoji]()
     private var uniqueEmojiId = 0
+    
+    init(json: Data) throws {
+        self = try JSONDecoder().decode(EmojiArt.self, from: json)
+    }
+    
+    init() {}
+    
+    func json() throws -> Data {
+        let encoded = try JSONEncoder().encode(self)
+        print("EmojiArt Encoded: \(String(data: encoded, encoding: .utf8) ?? "nil")")
+        return encoded
+    }
     
     mutating func setBackground(url: URL) -> Void {
         self.url = url 
@@ -39,13 +51,13 @@ struct EmojiArt {
         }
     }
     
-    struct Emoji: Identifiable {
+    struct Emoji: Identifiable, Codable {
         var id: Int
         let emoji: String
         var position: Position
         var size: Double
         
-        struct Position {
+        struct Position: Codable {
             var x: Double
             var y: Double
             
